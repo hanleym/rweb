@@ -83,7 +83,20 @@ pub fn compile(
             } else {
                 panic!("path parameters are not allowed here (currently)")
             }
-        } else {
+        } else if segment.starts_with('<') {
+            let name = String::from(&segment[1..segment.len() - 1]).to_lowercase();
+            q!(Vars { name }, {
+                rweb::filters::path::param::<String>()
+                .and_then(move |seg: String| async move {
+                    if seg.to_lowercase() == name {
+                        Ok(())
+                    } else {
+                        Err(warp::reject())
+                    }
+                })
+                .untuple_one()
+            })
+        }else{
             q!(Vars { segment }, { rweb::filters::path::path(segment) })
         };
 
