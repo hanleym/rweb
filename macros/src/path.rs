@@ -80,7 +80,17 @@ pub fn compile(
                 panic!("path parameters are not allowed here (currently)")
             }
         } else {
-            q!(Vars { segment }, { rweb::filters::path::path(segment) })
+            q!(Vars { segment }, {
+                rweb::filters::path::param::<String>()
+                .and_then(move |seg: String| async move {
+                    if seg.to_lowercase() == String::from(segment).to_lowercase() {
+                        Ok(())
+                    } else {
+                        Err(warp::reject())
+                    }
+                })
+                .untuple_one()
+            })
         };
 
         if exprs.is_empty() {
