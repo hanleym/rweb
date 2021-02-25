@@ -68,9 +68,9 @@ pub fn router(attr: TokenStream, item: TokenStream) -> ItemFn {
             if list.path.is_ident("services") {
                 for name in list.nested.iter() {
                     if exprs.is_empty() {
-                        exprs.push(q!(Vars { name, args: &args }, { name(args) }).parse());
+                        exprs.push(q!(Vars { name, args: &args }, { name(args.clone()) }).parse());
                     } else {
-                        exprs.push(q!(Vars { name, args: &args }, { or(name(args)) }).parse());
+                        exprs.push(q!(Vars { name, args: &args }, { or(name(args.clone())) }).parse());
                     }
                 }
 
