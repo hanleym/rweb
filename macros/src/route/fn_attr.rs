@@ -1,12 +1,29 @@
 use super::ParenTwoValue;
 use crate::parse::{Delimited, Paren};
 use pmutil::{q, ToTokensExt};
+use proc_macro2::TokenStream;
 use syn::{parse2, Attribute, Expr, Meta, MetaNameValue};
 
 /// Handle attributes on fn item like `#[header(ContentType =
 /// "application/json")]`
 pub fn compile_fn_attrs(mut base: Expr, attrs: &mut Vec<Attribute>, emitted_map: bool) -> Expr {
     attrs.retain(|attr| {
+        if attr.path.is_ident("filter") {
+            let filter = parse2::<Paren<TokenStream>>(attr.tokens.clone())
+                .expect("Correct usage: #[filter(MyFilterFunction)]")
+                .inner;
+
+            base = q!(
+                Vars {
+                    base: &base,
+                    filter
+                },
+                { base.and(filter) }
+            )
+            .parse();
+            return false;
+        }
+
         if attr.path.is_ident("header") {
             let t: ParenTwoValue = parse2(attr.tokens.clone()).expect(
                 "failed to parser header. Please provide it like #[header(\"ContentType\", \
